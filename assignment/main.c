@@ -16,7 +16,6 @@ int main(int argc, char *argv[]){
     int selection = 0;
     if (argc < 2) {
         fprintf(stderr, "사용법 : %s file\n", argv[0]);
-        printf("ㅁㄴㅇㄹㅁㄴㅇㄹ");
         exit(1);
     }
     while(1) {

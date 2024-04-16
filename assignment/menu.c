@@ -28,21 +28,18 @@ int listdb(char* filename) {
 
 /* 학번을 입력받아 해당 학생의 레코드를 파일에서 읽어 출력한다. */
 int querydb(char * filename){
-    printf("querydb START_ID: %d\n", START_ID);
     struct student rec;
     char c;
     int id;
     FILE *fp;
     if ((fp = fopen(filename, "rb")) == NULL) {
         fprintf(stderr, "파일 열기 오류\n");
-        exit(2);
+        return 1;
     }
     do {
         printf("검색할 학생의 학번 입력: ");
         if (scanf("%d", &id) == 1) {
             fseek(fp, (id - START_ID) *sizeof(rec), SEEK_SET);
-            printf("(id - START_ID) *sizeof(rec): %d\n", (id - START_ID) *sizeof(rec));
-
             if ((fread(&rec, sizeof(rec), 1, fp) > 0) && (rec.id != 0)) {
                 printf("학번: %8d 이름: %4s\n", rec.id, rec.name, rec.score);
             }
@@ -51,11 +48,11 @@ int querydb(char * filename){
             printf("계속하겠습니까?(Y/N)");
             scanf(" %c", &c);
         } 
-    }
-    while (c == 'Y');
+    } while (c == 'Y' || c == 'y');
     fclose(fp);
     return 0;
 }
+
 /* 학번을 입력받아 해당 학생 레코드를 수정한다. */
 int updatedb(char *filename){
     struct student rec;
@@ -65,30 +62,18 @@ int updatedb(char *filename){
 
     if ((fp = fopen(filename, "rb+")) == NULL) {
         fprintf(stderr, "파일 열기 오류\n");
-        exit(2);
+        return 1;
     }
 
     do {
-        printf("파일 위치(FILE *fp): %d", *fp);
         printf("수정할 학생의 학번 입력: ");
         if (scanf("%d", &id) == 1) {
-            printf("%d", id);
-
-            printf("fseek이전 fp: %d", *fp);
-
             fseek(fp, (id - START_ID)*sizeof(rec), SEEK_SET);
-
-            printf("fseek이후 fp: %d", *fp);
-            printf("fseek이후 id: %d", id);
-            printf("fseek이후 sid: %d", START_ID);
-            printf("fseek이후 s(rec): %d", sizeof(rec));
-
             if ((fread(&rec, sizeof(rec), 1, fp) > 0) && (rec.id != 0)) { 
-                // printf("fread이후 fp: %d", &fp);
                 printf("학번: %8d 이름: %4s 점수: %4d\n", rec.id, rec.name, rec.score);
                 printf("새로운 점수 입력: ");
                 scanf("%d", &rec.score);
-                fseek(fp, (long)-sizeof(rec), SEEK_CUR);
+                fseek(fp, (long) - sizeof(rec), SEEK_CUR);
                 fwrite(&rec, sizeof(rec), 1, fp);
             }
             else printf("레코드 %d 없음\n", id);
@@ -96,8 +81,7 @@ int updatedb(char *filename){
         else printf("입력오류\n");
         printf("계속하겠습니까?(Y/N)");
         scanf(" %c",&c);
-    }
-    while (c == 'Y');
+    } while (c == 'Y' || c == 'y');
     fclose(fp);
     return 0;
 }
@@ -106,10 +90,8 @@ int insertdb(char * filename){
     struct student rec;
     FILE *fp;
     char c;
-    fp = fopen(filename, "ab");
-    printf("파일 위치(FILE *fp): %d", &fp);
-    do 
-    {
+    fp = fopen(filename, "rb+");
+    do {
         printf("새로운 학생 정보 등록을 시작합니다.\n");
         printf("학번 : ");
         scanf("%d", &rec.id);
@@ -117,38 +99,15 @@ int insertdb(char * filename){
         scanf("%s", rec.name);
         printf("성적 : ");
         scanf("%hd", &rec.score);
-
-        printf("[insert] fseek이전 fp: %d", fp);
-        printf("[insert] fseek이전 *fp: %d", *fp);
-        printf("[insert] fseek이전 &fp: %d", &fp);
-
-        fseek(fp, (rec.id - START_ID)*sizeof(rec), SEEK_SET);
-
-        printf("[insert] fseek이후 fp: %d", *fp);
-        printf("fseek이후 id: %d", rec.id);
-        printf("fseek이후 sid: %d", START_ID);
-        printf("fseek이후 s(rec): %d", sizeof(rec));
-
-        printf("아니 왜 출력이?");
-        // printf("%d", &rec.id);
-        printf("%d", rec.id);
-
+        fseek(fp, (rec.id - START_ID) * sizeof(rec), SEEK_SET);
         fwrite(&rec, sizeof(rec), 1, fp);
-
-        printf("fwrite *fp: %d", *fp);
-        printf("fwrite &fp: %d", &fp);
-
-        printf("새로운 학생 정보가 %d에 등록되었습니다.\n계속하겠습니까?(Y/N)", (rec.id - START_ID)*sizeof(rec));
-
+        printf("새로운 학생 정보가 등록되었습니다.\n계속하겠습니까?(Y/N)");
         scanf(" %c",&c);
-
-
-
-    }
-    while (c == 'Y');
+    } while (c == 'Y' || c == 'y');
     fclose(fp);
     return 0;
 }
+
 /* 학생 학번을 입력받아 해당 학생 정보를 데이터베이스 파일에서 삭제한다. */
  int deletedb(char *filename) {
     int id;
@@ -160,6 +119,7 @@ int insertdb(char * filename){
         perror(filename);
         return 1;
     }
+
     do {
         printf("삭제할 학생의 학번 입력: ");
         if (scanf("%d", &id) == 1) {
@@ -169,10 +129,12 @@ int insertdb(char * filename){
                 fseek(fp, -sizeof(rec), SEEK_CUR);
                 fwrite(&rec, sizeof(rec), 1, fp);
                 printf("학번이 %d인 학생 정보가 삭제되었습니다.\n", id);
-            } else {
+            }
+            else {
                 printf("레코드 %d 없음\n", id);
             }
-        } else {
+        }
+        else {
             printf("입력 오류\n");
             break;
         }
